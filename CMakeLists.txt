@@ -83,11 +83,17 @@ add_compile_definitions(YAML_CPP_STATIC_DEFINE)
 include(cmake/lus-cvars.cmake)
 
 if (WIN32)
+FetchContent_Declare(UwpLibs
+	GIT_REPOSITORY https://github.com/worleydl/uwp-dep.git
+	GIT_TAG 352c25ee3df383802248628456e3a7d2ed0bb1c1 
+)
+FetchContent_MakeAvailable(UwpLibs)
+
 include(cmake/automate-vcpkg.cmake)
 set(VCPKG_TRIPLET x64-windows-static)
 set(VCPKG_TARGET_TRIPLET x64-windows-static)
 vcpkg_bootstrap()
-vcpkg_install_packages(zlib bzip2 libzip libpng sdl2 sdl2-net glew glfw3 nlohmann-json tinyxml2 spdlog libogg libvorbis)
+vcpkg_install_packages(zlib bzip2 libzip libpng sdl2-net glew nlohmann-json tinyxml2 spdlog libogg libvorbis)
 
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -199,6 +205,11 @@ add_compile_definitions(
 	SPAGHETTI_VERSION="${PROJECT_VERSION}"
 )
 
+option(UWP "Build UWP-compatible static lib" OFF)
+if(UWP)
+    add_compile_definitions(__UWP__=1)
+endif()
+
 # Find necessary libraries
 if (UNIX AND NOT APPLE)
 find_package(OpenGL REQUIRED)
@@ -309,7 +320,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
         RESOURCE "${IMAGE_FILES};${STORYBOARD_FILE};${ICON_FILES}"
     )
 else()
+    if(UWP)
+    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
+    else()
     add_executable(${PROJECT_NAME} ${ALL_FILES})
+    endif()
 endif()
 
 ################################################################################
@@ -521,7 +536,7 @@ option(BUILD_SF64 "Build with Star Fox 64 support" OFF)
 option(BUILD_FZERO "Build with F-Zero X support" OFF)
 
 add_subdirectory(torch)
-target_link_libraries(${PROJECT_NAME} PRIVATE torch "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+target_link_libraries(${PROJECT_NAME} PRIVATE torch GLFW3 LIBUWP SDL2 "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
 

@@ -1,3 +1,7 @@
+#ifdef __UWP__
+#define SDLMAIN_DECLSPEC __declspec(dllexport)
+#endif
+
 #include <libultraship.h>
 
 #include "Game.h"
