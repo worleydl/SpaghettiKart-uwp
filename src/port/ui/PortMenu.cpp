@@ -213,16 +213,20 @@ void PortMenu::AddSettings() {
     // Graphics Settings
     static int32_t maxFps;
     const char* tooltip = "";
+#ifndef __UWP__
     if (Ship::Context::GetInstance()->GetWindow()->GetWindowBackend() == Ship::WindowBackend::FAST3D_DXGI_DX11) {
+#endif
         maxFps = 360;
         tooltip = "Uses Matrix Interpolation to create extra frames, resulting in smoother graphics. This is "
                   "purely visual and does not impact game logic, execution of glitches etc.\n\nA higher target "
                   "FPS than your monitor's refresh rate will waste resources, and might give a worse result.";
+#ifndef __UWP__
     } else {
         maxFps = Ship::Context::GetInstance()->GetWindow()->GetCurrentRefreshRate();
         tooltip = "Uses Matrix Interpolation to create extra frames, resulting in smoother graphics. This is "
                   "purely visual and does not impact game logic, execution of glitches etc.";
     }
+#endif
     path.sidebarName = "Graphics";
     AddSidebarEntry("Settings", "Graphics", 3);
     AddWidget(path, "Renderer API (Needs reload)", WIDGET_VIDEO_BACKEND);
@@ -284,19 +288,38 @@ void PortMenu::AddSettings() {
                 info.activeDisables.push_back(DISABLE_FOR_MATCH_REFRESH_RATE_ON);
         })
         .Options(IntSliderOptions().Tooltip(tooltip).Min(30).Max(maxFps).DefaultValue(30));
+#ifndef __UWP__
     AddWidget(path, "Match Refresh Rate", WIDGET_BUTTON)
         .Callback([](WidgetInfo& info) {
             int hz = Ship::Context::GetInstance()->GetWindow()->GetCurrentRefreshRate();
             if (hz >= 30 && hz <= 360) {
                 CVarSetInteger("gInterpolationFPS", hz);
+                CVarSetInteger(CVAR_MATCH_REFRESH, 1);
                 Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
             }
         })
         .PreFunc([](WidgetInfo& info) { info.isHidden = mPortMenu->disabledMap.at(DISABLE_FOR_NOT_DIRECTX).active; })
         .Options(ButtonOptions().Tooltip("Matches interpolation value to the current game's window refresh rate."));
+#endif
     AddWidget(path, "Match Refresh Rate", WIDGET_CVAR_CHECKBOX)
         .CVar("gMatchRefreshRate")
+#ifndef __UWP__
         .PreFunc([](WidgetInfo& info) { info.isHidden = mPortMenu->disabledMap.at(DISABLE_FOR_DIRECTX).active; })
+#else
+        // DLW: Sorry for DRY violation, can maybe remove block above and keep behavior the same across gl/dx?
+        .Callback([](WidgetInfo& info) {
+            if (!CVarGetInteger(CVAR_MATCH_REFRESH, 0)) {
+                return;
+            }
+
+            int hz = Ship::Context::GetInstance()->GetWindow()->GetCurrentRefreshRate();
+            if (hz >= 30 && hz <= 360) {
+                CVarSetInteger("gInterpolationFPS", hz);
+                CVarSetInteger(CVAR_MATCH_REFRESH, 1);
+                Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+            }
+        })
+#endif
         .Options(CheckboxOptions().Tooltip("Matches interpolation value to the current game's window refresh rate."));
     AddWidget(path, "Jitter fix : >= % d FPS", WIDGET_CVAR_SLIDER_INT)
         .CVar("gExtraLatencyThreshold")

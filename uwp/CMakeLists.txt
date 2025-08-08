@@ -6,12 +6,19 @@ set(CMAKE_SYSTEM_VERSION 10.0.19041.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (Debug, Release, RelWithDebInfo, MinSizeRel)" FORCE)
+endif()
+
 # Define project
 project(sk-uwp LANGUAGES CXX)
 set_directory_properties(PROPERTIES VS_STARTUP_PROJECT ${PROJECT_NAME})
 
 # Config for haxe dependency paths
-set(SPAGHETTI_DIR CACHE PATH "")
+set(SPAGHETTI_DIR "" CACHE PATH "")
+if(NOT SPAGHETTI_DIR)
+  message(FATAL_ERROR "SPAGHETTI_DIR must be set to a valid path pointing to the static lib build")
+endif()
 
 add_executable(${PROJECT_NAME} WIN32
 	main.cpp
@@ -26,7 +33,7 @@ set(PkgAssets
 )
 
 set(BinDeps
-	${SPAGHETTI_DIR}/Release/spaghettify.dll
+	${SPAGHETTI_DIR}/${CMAKE_BUILD_TYPE}/spaghettify.dll
 
 	${SPAGHETTI_DIR}/mk64.o2r
 	${SPAGHETTI_DIR}/spaghetti.o2r
@@ -34,7 +41,6 @@ set(BinDeps
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/dxil.dll
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/glfw3.dll
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/libgallium_wgl.dll
-	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/libglapi.dll
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/libuwp.dll
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/opengl32.dll
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/bin/SDL2.dll
@@ -44,7 +50,7 @@ set(BinDeps
 )
 
 set(BinLibs
-	${SPAGHETTI_DIR}/Release/spaghettify.lib
+	${SPAGHETTI_DIR}/${CMAKE_BUILD_TYPE}/spaghettify.lib
 
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/lib/libuwp.lib
 	${SPAGHETTI_DIR}/_deps/uwplibs-src/x64/lib/SDL2.lib

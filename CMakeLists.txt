@@ -85,7 +85,7 @@ include(cmake/lus-cvars.cmake)
 if (WIN32)
 FetchContent_Declare(UwpLibs
 	GIT_REPOSITORY https://github.com/worleydl/uwp-dep.git
-	GIT_TAG 352c25ee3df383802248628456e3a7d2ed0bb1c1 
+	GIT_TAG 0ec87d2406b47743772e2787654275a6f6c0e284
 )
 FetchContent_MakeAvailable(UwpLibs)
 

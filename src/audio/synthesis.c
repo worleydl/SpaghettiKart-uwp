@@ -366,7 +366,7 @@ Acmd* synthesis_process_note(s32 noteIndex, struct NoteSubEu* noteSubEu, struct 
     u32 var_t2;
     u8* var_a0_2;
 
-    s32 s5Aligned;
+    s32 s5Aligned, ramAlign, sampleAddrOffset;
     s32 temp_t6;
     s32 nParts;
     s32 curPart;
@@ -485,7 +485,19 @@ Acmd* synthesis_process_note(s32 noteIndex, struct NoteSubEu* noteSubEu, struct 
                     aligned = ALIGN(((loopInfo_2 * 9) + 16), 4);
                     addr = (0x540 - aligned); // DMEM_ADDR_COMPRESSED_ADPCM_DATA
 
-                    aLoadBuffer(cmd++, VIRTUAL_TO_PHYSICAL2(var_a0_2 - var_t2), addr, aligned);
+                    // UWP: The classic audio fix didn't come over 1:1, I think it affects ADPCM only
+                    //      UWP exhibits access violations, ramAlign will doublecheck the offsets don't leave sample bounds
+                    sampleAddrOffset = temp_t6 * 9;
+
+                    ramAlign =
+                        MIN((loopInfo_2 * 9) + 16,
+                        (audioBookSample->sampleSize) - (sampleAddrOffset - var_t2));
+
+                    aLoadBufferNoRound(cmd++, VIRTUAL_TO_PHYSICAL2(var_a0_2 - var_t2),
+						   addr, ramAlign);
+                    aBackfillBuffer(addr + ramAlign,
+				    aligned -ramAlign); // Dunno if needed but I make believe this prevents artifacts
+
                 } else {
                     s1 = 0; // ?
                     var_t2 = 0;
